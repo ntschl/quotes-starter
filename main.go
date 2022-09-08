@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"math/rand"
 )
 
 type quote struct {
@@ -12,7 +13,7 @@ type quote struct {
 
 var quotes = []quote{
 	{Quote: "Clear is better than clever.", Author: "Ronald McDonald"},
-	{Quote: "Empty string check!", Author: "Squidard Tentacles"},
+	{Quote: "Empty string check!", Author: "Squidward Tentacles"},
 	{Quote: "Don't panic.", Author: "Oprah Winfrey"},
 	{Quote: "A little copying is better than a little dependency.", Author: "Chris Pratt"},
 	{Quote: "The bigger the interface, the weaker the abstraction.", Author: "Mary Poppins"},
@@ -30,14 +31,20 @@ var quotes = []quote{
 
 func main() {
 	router := gin.Default()
-	router.GET("/quotes", getQuotes)
+	router.GET("/quotes", getRandomQuote)
 
-	router.Run("localhost:8080")
+	router.Run("localhost:80")
 }
 
-func getQuotes(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, quotes)
+func getRandomQuote(c *gin.Context) {
+	index := rand.Intn(len(quotes))
+	quote := quotes[index]
+	c.IndentedJSON(http.StatusOK, quote)
 }
+
+// func getQuotes(c *gin.Context) {
+// 	c.IndentedJSON(http.StatusOK, quotes)
+// }
 
 // func main() {
 // 	r := gin.Default()
