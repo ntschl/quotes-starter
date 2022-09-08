@@ -33,7 +33,7 @@ func main() {
 	router := gin.Default()
 	router.GET("/quotes", getRandomQuote)
 
-	router.Run("localhost:80")
+	router.Run("localhost:8080")
 }
 
 func getRandomQuote(c *gin.Context) {
@@ -56,4 +56,3 @@ func getRandomQuote(c *gin.Context) {
 // 	})
 // 	r.Run() //default's on 8080
 // }
-
