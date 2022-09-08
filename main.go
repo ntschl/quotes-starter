@@ -7,8 +7,8 @@ import (
 )
 
 type quote struct {
-	Quote string `json:quote`
-	Author string `json:author`
+	Quote string `json:"quote"`
+	Author string `json:"author"`
 }
 
 var quotes = []quote{
@@ -32,8 +32,7 @@ var quotes = []quote{
 func main() {
 	router := gin.Default()
 	router.GET("/quotes", getRandomQuote)
-
-	router.Run("localhost:8080")
+	router.Run("0.0.0.0:8080")
 }
 
 func getRandomQuote(c *gin.Context) {
