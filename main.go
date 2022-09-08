@@ -38,7 +38,7 @@ func main() {
 func getRandomQuote(c *gin.Context) {
 	index := rand.Intn(len(quotes))
 	quote := quotes[index]
-	c.IndentedJSON(http.StatusOK, quote)
+	c.JSON(http.StatusOK, quote)
 }
 
 // func getQuotes(c *gin.Context) {
