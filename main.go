@@ -1,11 +1,11 @@
 package main
 
-import {
+import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-}
+)
 
-type Quote struct {
+type quote struct {
 	Quote string `json:quote`
 	Author string `json:author`
 }
@@ -26,6 +26,17 @@ var quotes = []quote{
 	{Quote: "Don't communicate by sharing memory, share memory by communicating.", Author: "Prince"},
 	{Quote: "Concurrency is not parallelism.", Author: "Lao Tzu"},
 	{Quote: "Design the architecture, name the components, document the details.", Author: "Tony the Tiger"},
+}
+
+func main() {
+	router := gin.Default()
+	router.GET("/quotes", getQuotes)
+
+	router.Run("localhost:8080")
+}
+
+func getQuotes(c *gin.Context) {
+	c.IndentedJSON(http.StatusOK, quotes)
 }
 
 // func main() {
