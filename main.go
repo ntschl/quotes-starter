@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"net/http"
 	"math/rand"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type quote struct {
-	Quote string `json:"quote"`
+	Quote  string `json:"quote"`
 	Author string `json:"author"`
 }
 
@@ -31,14 +32,18 @@ var quotes = []quote{
 
 func main() {
 	router := gin.Default()
-	router.GET("/quotes", getRandomQuote)
+	router.GET("/quotes", GetQuote)
 	router.Run("0.0.0.0:8080")
 }
 
-func getRandomQuote(c *gin.Context) {
+func GetRandom() quote {
 	index := rand.Intn(len(quotes))
 	quote := quotes[index]
-	c.JSON(http.StatusOK, quote)
+	return quote
+}
+
+func GetQuote(c *gin.Context) {
+	c.JSON(http.StatusOK, GetRandom())
 }
 
 // func getQuotes(c *gin.Context) {
