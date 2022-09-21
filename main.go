@@ -54,17 +54,32 @@ func postQuote(c *gin.Context) {
 		return
 	}
 
-	if validateQuote(newQuote) {
+	// only do the good stuff if the quote and author are valid, otherwise throw 400
+	if validateQuote(newQuote) && authenticate(c) {
 		newKey := uuid.New()
 		newQuote.Id = newKey.String()
 		newId.Id = newKey.String()
 		quotesMap[newKey.String()] = newQuote
 		c.JSON(http.StatusCreated, newId)
-	} else {
+	} else if !validateQuote(newQuote) {
 		c.JSON(http.StatusBadRequest, "quote and author must be at least 3 characters")
+	} else if !authenticate(c) {
+		c.JSON(http.StatusUnauthorized, "you ain't authorized!")
 	}
 }
 
+// check for api key
+func authenticate(c *gin.Context) bool {
+	headers := c.Request.Header
+	val, exists := headers["X-Api-Key"]
+	if exists && val[0] == "COCKTAILSAUCE" {
+		return true
+	} else {
+		return false
+	}
+}
+
+// check quote and author for at least 3 chars
 func validateQuote(quote quote) bool {
 	if len(quote.Author) >= 3 && len(quote.Quote) >= 3 {
 		return true
@@ -74,8 +89,12 @@ func validateQuote(quote quote) bool {
 
 // get quote with randomized key and turn into JSON
 func getRandomQuote(c *gin.Context) {
-	quote := quotesMap[getRandomKey()]
-	c.JSON(http.StatusOK, quote)
+	if authenticate(c) {
+		quote := quotesMap[getRandomKey()]
+		c.JSON(http.StatusOK, quote)
+	} else {
+		c.JSON(http.StatusUnauthorized, "you ain't authorized!")
+	}
 }
 
 // make array of keys and pull random key thru random index
@@ -90,13 +109,15 @@ func getRandomKey() string {
 	return key
 }
 
-// use id param to search quote map bevcause the keys are ids
+// use id param to search quote map because the keys are ids
 func getQuoteByID(c *gin.Context) {
 	id := c.Param("id")
 	quote, exists := quotesMap[id]
-	if exists {
+	if exists && authenticate(c) {
 		c.JSON(http.StatusOK, quote)
-		return
+	} else if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"message": "matching id not found"})
+	} else if !authenticate(c) {
+		c.JSON(http.StatusUnauthorized, "you ain't authorized!")
 	}
-	c.JSON(http.StatusNotFound, gin.H{"message": "matching id not found"})
 }
