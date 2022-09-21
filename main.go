@@ -15,6 +15,10 @@ type quote struct {
 	Author string `json:"author"`
 }
 
+type id struct {
+	Id string `json:"id"`
+}
+
 var quotesMap = map[string]quote{
 	"ab4b7a65-d2a4-4eb7-a2db-c15bade7bb26": {Id: "ab4b7a65-d2a4-4eb7-a2db-c15bade7bb26", Quote: "Clear is better than clever.", Author: "Ronald McDonald"},
 	"84ca5b5f-38f0-4e00-bcf5-ae916e887690": {Id: "84ca5b5f-38f0-4e00-bcf5-ae916e887690", Quote: "Empty string check!", Author: "Squidward Tentacles"},
@@ -41,15 +45,31 @@ func main() {
 	router.Run("0.0.0.0:8080")
 }
 
+// create new quote, generate uuid, add to map, return only the id
 func postQuote(c *gin.Context) {
 	var newQuote quote
+	var newId id
+
 	if err := c.BindJSON(&newQuote); err != nil {
 		return
 	}
-	newKey := uuid.New()
-	newQuote.Id = newKey.String()
-	quotesMap[newKey.String()] = newQuote
-	c.IndentedJSON(http.StatusCreated, newQuote)
+
+	if validateQuote(newQuote) {
+		newKey := uuid.New()
+		newQuote.Id = newKey.String()
+		newId.Id = newKey.String()
+		quotesMap[newKey.String()] = newQuote
+		c.JSON(http.StatusCreated, newId)
+	} else {
+		c.JSON(http.StatusBadRequest, "quote and author must be at least 3 characters")
+	}
+}
+
+func validateQuote(quote quote) bool {
+	if len(quote.Author) >= 3 && len(quote.Quote) >= 3 {
+		return true
+	}
+	return false
 }
 
 // get quote with randomized key and turn into JSON
