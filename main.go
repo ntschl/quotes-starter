@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type quote struct {
@@ -36,7 +37,19 @@ func main() {
 	router := gin.Default()
 	router.GET("/quotes", getRandomQuote)
 	router.GET("/quotes/:id", getQuoteByID)
+	router.POST("/quotes", postQuote)
 	router.Run("0.0.0.0:8080")
+}
+
+func postQuote(c *gin.Context) {
+	var newQuote quote
+	if err := c.BindJSON(&newQuote); err != nil {
+		return
+	}
+	newKey := uuid.New()
+	newQuote.Id = newKey.String()
+	quotesMap[newKey.String()] = newQuote
+	c.IndentedJSON(http.StatusCreated, newQuote)
 }
 
 // get quote with randomized key and turn into JSON
