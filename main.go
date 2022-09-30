@@ -1,9 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
-	"math/rand"
+	"log"
 	"net/http"
+	"os"
+
+	_ "github.com/jackc/pgx/v4/stdlib"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -18,6 +22,8 @@ type quote struct {
 type id struct {
 	ID string `json:"id"`
 }
+
+var pool *sql.DB
 
 var quotesMap = map[string]quote{
 	"ab4b7a65-d2a4-4eb7-a2db-c15bade7bb26": {ID: "ab4b7a65-d2a4-4eb7-a2db-c15bade7bb26", Quote: "Clear is better than clever.", Author: "Ronald McDonald"},
@@ -37,11 +43,14 @@ var quotesMap = map[string]quote{
 	"2c371688-f482-4c77-943e-89937da93d27": {ID: "2c371688-f482-4c77-943e-89937da93d27", Quote: "Design the architecture, name the components, document the details.", Author: "Tony the Tiger"},
 }
 
+// u know about main ;)
 func main() {
+	connectUnixSocket()
 	router := gin.Default()
-	router.GET("/quotes", getRandomQuote)
-	router.GET("/quotes/:id", getQuoteByID)
+	router.GET("/quotes", getRandomSQL)
+	router.GET("/quotes/:id", getQuoteByIDSQL)
 	router.POST("/quotes", postQuote)
+	router.GET("/firstquote", getFirstQuote)
 	router.Run("0.0.0.0:8080")
 }
 
@@ -71,8 +80,8 @@ func postQuote(c *gin.Context) {
 // check for api key
 func authenticate(c *gin.Context) bool {
 	headers := c.Request.Header
-	val, exists := headers["X-Api-Key"]
-	if exists && val[0] == "COCKTAILSAUCE" {
+	headerStrings, exists := headers["X-Api-Key"]
+	if exists && headerStrings[0] == "COCKTAILSAUCE" {
 		return true
 	} else {
 		return false
@@ -87,37 +96,103 @@ func validateQuote(quote quote) bool {
 	return false
 }
 
-// get quote with randomized key and turn into JSON
-func getRandomQuote(c *gin.Context) {
-	if authenticate(c) {
-		quote := quotesMap[getRandomKey()]
-		c.JSON(http.StatusOK, quote)
-	} else {
-		c.JSON(http.StatusUnauthorized, "you ain't authorized!")
+// connectUnixSocket initializes a Unix socket connection pool for
+// a Cloud SQL instance of Postgres.
+func connectUnixSocket() error {
+	mustGetenv := func(k string) string {
+		v := os.Getenv(k)
+		if v == "" {
+			log.Printf("Warning: %s environment variable not set.\n", k)
+		}
+		return v
 	}
+
+	var (
+		dbUser         = mustGetenv("DB_USER")              // e.g. 'my-db-user'
+		dbPwd          = mustGetenv("NATE_PASSWORD")        // e.g. 'my-db-password'
+		unixSocketPath = mustGetenv("INSTANCE_UNIX_SOCKET") // e.g. '/cloudsql/project:region:instance'
+		dbName         = mustGetenv("DB_NAME")              // e.g. 'my-database'
+	)
+
+	dbURI := fmt.Sprintf("user=%s password=%s database=%s host=%s",
+		dbUser, dbPwd, dbName, unixSocketPath)
+
+	// dbPool is the pool of database connections.
+	var err error
+	pool, err = sql.Open("pgx", dbURI)
+	if err != nil {
+		return fmt.Errorf("sql.Open: %v", err)
+	}
+
+	// ...
+
+	return err
 }
 
-// make array of keys and pull random key thru random index
-func getRandomKey() string {
-	keyArray := []string{}
-	for k := range quotesMap {
-		keyArray = append(keyArray, k)
+func getFirstQuote(c *gin.Context) {
+	row := pool.QueryRow("SELECT ID, quote, author FROM quotes LIMIT 1")
+	q := &quote{}
+	err := row.Scan(&q.ID, &q.Quote, &q.Author)
+	if err != nil {
+		log.Fatal(err)
 	}
-	fmt.Println(keyArray)
-	index := rand.Intn(len(keyArray))
-	key := keyArray[index]
-	return key
+	c.JSON(http.StatusOK, q)
 }
 
 // use id param to search quote map because the keys are ids
-func getQuoteByID(c *gin.Context) {
+func getQuoteByIDSQL(c *gin.Context) {
 	id := c.Param("id")
-	quote, exists := quotesMap[id]
-	if exists && authenticate(c) {
-		c.JSON(http.StatusOK, quote)
-	} else if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"message": "matching id not found"})
-	} else if !authenticate(c) {
-		c.JSON(http.StatusUnauthorized, "you ain't authorized!")
+	row := pool.QueryRow(fmt.Sprintf("SELECT id, quote, author FROM quotes where id = '%s'", id))
+	q := &quote{}
+	err := row.Scan(&q.ID, &q.Quote, &q.Author)
+	if err != nil {
+		log.Fatal(err)
 	}
+	c.JSON(http.StatusOK, q)
 }
+
+// use random order clause in sql statement to randomize select order then limit 1 to grab only the first row
+func getRandomSQL(c *gin.Context) {
+	row := pool.QueryRow("SELECT ID, quote, author FROM quotes ORDER BY RANDOM() LIMIT 1")
+	q := &quote{}
+	err := row.Scan(&q.ID, &q.Quote, &q.Author)
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.JSON(http.StatusOK, q)
+}
+
+// get quote with randomized key and turn into JSON
+// func getRandomQuote(c *gin.Context) {
+// 	if authenticate(c) {
+// 		quote := quotesMap[getRandomKey()]
+// 		c.JSON(http.StatusOK, quote)
+// 	} else {
+// 		c.JSON(http.StatusUnauthorized, "you ain't authorized!")
+// 	}
+// }
+
+// use id param to search quote map because the keys are ids
+// func getQuoteByID(c *gin.Context) {
+// 	id := c.Param("id")
+// 	quote, exists := quotesMap[id]
+// 	if exists && authenticate(c) {
+// 		c.JSON(http.StatusOK, quote)
+// 	} else if !exists {
+// 		c.JSON(http.StatusNotFound, gin.H{"message": "matching id not found"})
+// 	} else if !authenticate(c) {
+// 		c.JSON(http.StatusUnauthorized, "you ain't authorized!")
+// 	}
+// }
+
+// make array of keys and pull random key thru random index
+// func getRandomKey() string {
+// 	keyArray := []string{}
+// 	for k := range quotesMap {
+// 		keyArray = append(keyArray, k)
+// 	}
+// 	fmt.Println(keyArray)
+// 	index := rand.Intn(len(keyArray))
+// 	key := keyArray[index]
+// 	return key
+// }
