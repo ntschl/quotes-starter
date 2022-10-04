@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "cnx1",
+            "database": "quotes",
+            "username": "db",
+            "password": "db"
+        }
+    ]
+}
