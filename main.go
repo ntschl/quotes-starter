@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	_ "github.com/99designs/gqlgen"
 	_ "github.com/jackc/pgx/v4/stdlib"
 
 	"github.com/gin-gonic/gin"
