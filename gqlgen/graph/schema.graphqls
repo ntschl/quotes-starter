@@ -1,0 +1,13 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+#A quote with an id & author
+type Quote {
+  #The id of the quote, a uuid turned string
+  id: String!
+  #The body text of the quote
+  quote: String!
+  #The author of the quote
+  author: String!
+}
