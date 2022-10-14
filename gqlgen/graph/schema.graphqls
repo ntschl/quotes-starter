@@ -11,3 +11,10 @@ type Quote {
   #The author of the quote
   author: String!
 }
+
+type Query {
+  #returns a random quote
+  randomQuote: Quote!
+  #returns a specific quote by id
+  quoteByID(id: String!): Quote!
+}
