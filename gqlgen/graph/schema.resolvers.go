@@ -6,8 +6,7 @@ package graph
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/ntschl/quotes-starter/gqlgen/graph/generated"
@@ -24,7 +23,7 @@ func (r *queryResolver) RandomQuote(ctx context.Context) (*model.Quote, error) {
 
 	client := &http.Client{}
 	response, _ := client.Do(request)
-	data, err := ioutil.ReadAll(response.Body)
+	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +36,24 @@ func (r *queryResolver) RandomQuote(ctx context.Context) (*model.Quote, error) {
 
 // QuoteByID is the resolver for the quoteByID field.
 func (r *queryResolver) QuoteByID(ctx context.Context, id string) (*model.Quote, error) {
-	panic(fmt.Errorf("not implemented: QuoteByID - quoteByID"))
+	url := "http://34.160.33.1:80/quotes/" + id
+	request, err := http.NewRequest("GET", url, nil)
+	request.Header.Set("x-api-key", "COCKTAILSAUCE")
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{}
+	response, _ := client.Do(request)
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var quote model.Quote
+	json.Unmarshal(data, &quote)
+
+	return &quote, nil
 }
 
 // Query returns generated.QueryResolver implementation.
