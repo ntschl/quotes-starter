@@ -5,7 +5,10 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/ntschl/quotes-starter/gqlgen/graph/generated"
 	"github.com/ntschl/quotes-starter/gqlgen/graph/model"
@@ -13,7 +16,23 @@ import (
 
 // RandomQuote is the resolver for the randomQuote field.
 func (r *queryResolver) RandomQuote(ctx context.Context) (*model.Quote, error) {
-	panic(fmt.Errorf("not implemented: RandomQuote - randomQuote"))
+	request, err := http.NewRequest("GET", "http://34.160.33.1:80/quotes", nil)
+	request.Header.Set("x-api-key", "COCKTAILSAUCE")
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{}
+	response, _ := client.Do(request)
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var quote model.Quote
+	json.Unmarshal(data, &quote)
+
+	return &quote, nil
 }
 
 // QuoteByID is the resolver for the quoteByID field.
