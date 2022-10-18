@@ -30,5 +30,5 @@ type Mutation {
   #creates a new quote
   createQuote(input: NewQuote!): Quote
   #deletes a quote
-  deleteQuote(id: String!): Boolean
+  deleteQuote(id: String!): String
 }
