@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -25,7 +26,7 @@ func (r *mutationResolver) CreateQuote(ctx context.Context, input model.NewQuote
 	buffer := bytes.NewBuffer(byteArray)
 
 	request, _ := http.NewRequest("POST", "http://34.160.33.1:80/quotes", buffer)
-	request.Header.Set("x-api-key", "COCKTAILSAUCE")
+	request.Header.Set("x-api-key", fmt.Sprint(ctx.Value("myKey")))
 
 	client := &http.Client{}
 	response, _ := client.Do(request)
@@ -44,7 +45,7 @@ func (r *mutationResolver) CreateQuote(ctx context.Context, input model.NewQuote
 func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*string, error) {
 	url := "http://34.160.33.1:80/quotes/" + id
 	request, err := http.NewRequest("DELETE", url, nil)
-	request.Header.Set("x-api-key", "COCKTAILSAUCE")
+	request.Header.Set("x-api-key", fmt.Sprint(ctx.Value("myKey")))
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*string,
 // RandomQuote is the resolver for the randomQuote field.
 func (r *queryResolver) RandomQuote(ctx context.Context) (*model.Quote, error) {
 	request, err := http.NewRequest("GET", "http://34.160.33.1:80/quotes", nil)
-	request.Header.Set("x-api-key", "COCKTAILSAUCE")
+	request.Header.Set("x-api-key", fmt.Sprint(ctx.Value("myKey")))
 	if err != nil {
 		return nil, err
 	}
@@ -81,21 +82,18 @@ func (r *queryResolver) RandomQuote(ctx context.Context) (*model.Quote, error) {
 func (r *queryResolver) QuoteByID(ctx context.Context, id string) (*model.Quote, error) {
 	url := "http://34.160.33.1:80/quotes/" + id
 	request, err := http.NewRequest("GET", url, nil)
-	request.Header.Set("x-api-key", "COCKTAILSAUCE")
+	request.Header.Set("x-api-key", fmt.Sprint(ctx.Value("myKey")))
 	if err != nil {
 		return nil, err
 	}
-
 	client := &http.Client{}
 	response, _ := client.Do(request)
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
-
 	var quote model.Quote
 	json.Unmarshal(data, &quote)
-
 	return &quote, nil
 }
 
