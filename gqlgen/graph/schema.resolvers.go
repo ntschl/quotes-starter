@@ -49,9 +49,11 @@ func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*string,
 		return nil, err
 	}
 	client := &http.Client{}
-	client.Do(request)
-	response := "Successful deletion"
-	return &response, nil
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	return &response.Status, nil
 }
 
 // RandomQuote is the resolver for the randomQuote field.
