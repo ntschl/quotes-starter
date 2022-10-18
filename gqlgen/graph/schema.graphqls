@@ -18,3 +18,17 @@ type Query {
   #returns a specific quote by id
   quoteByID(id: String!): Quote!
 }
+
+input NewQuote {
+  #The body text of the quote
+  quote: String!
+  #The author of the quote
+  author: String!
+}
+
+type Mutation {
+  #creates a new quote
+  createQuote(input: NewQuote!): Quote
+  #deletes a quote
+  deleteQuote(id: String!): String
+}
