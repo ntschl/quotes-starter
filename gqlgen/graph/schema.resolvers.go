@@ -31,7 +31,10 @@ func (r *mutationResolver) CreateQuote(ctx context.Context, input model.NewQuote
 
 	client := &http.Client{}
 	response, _ := client.Do(request)
-	if response.Status == "401 Unauthorized" {
+	switch response.StatusCode {
+	case 401:
+		return nil, errors.New("Error: " + response.Status)
+	case 400:
 		return nil, errors.New("Error: " + response.Status)
 	}
 
@@ -55,9 +58,6 @@ func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*string,
 	}
 	client := &http.Client{}
 	response, err := client.Do(request)
-	if response.Status == "401 Unauthorized" {
-		return nil, errors.New("Error: " + response.Status)
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,10 @@ func (r *queryResolver) QuoteByID(ctx context.Context, id string) (*model.Quote,
 	}
 	client := &http.Client{}
 	response, _ := client.Do(request)
-	if response.Status == "401 Unauthorized" {
+	switch response.StatusCode {
+	case 401:
+		return nil, errors.New("Error: " + response.Status)
+	case 404:
 		return nil, errors.New("Error: " + response.Status)
 	}
 	data, err := io.ReadAll(response.Body)
