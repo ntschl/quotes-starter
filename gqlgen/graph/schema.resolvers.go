@@ -52,7 +52,7 @@ func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*string,
 	}
 	var quote, _ = r.Query().QuoteByID(ctx, id)
 	if quote == nil || id == "" {
-		return nil, errors.New("error: ID not found")
+		return nil, errors.New("error: ID cannot be empty")
 	}
 	client := &http.Client{}
 	response, err := client.Do(request)
