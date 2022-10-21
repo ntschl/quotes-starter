@@ -22,29 +22,23 @@ func (r *mutationResolver) CreateQuote(ctx context.Context, input model.NewQuote
 		Quote:  input.Quote,
 		Author: input.Author,
 	}
-
 	byteArray, _ := json.Marshal(quote)
 	buffer := bytes.NewBuffer(byteArray)
-
 	request, _ := http.NewRequest("POST", "http://34.160.33.1:80/quotes", buffer)
 	request.Header.Set("x-api-key", fmt.Sprint(ctx.Value("myKey")))
-
 	client := &http.Client{}
 	response, _ := client.Do(request)
 	switch response.StatusCode {
 	case 401:
-		return nil, errors.New("Error: " + response.Status)
+		return nil, errors.New("error: unauthorized")
 	case 400:
-		return nil, errors.New("Error: " + response.Status)
+		return nil, errors.New("error: quote and author must be at least 3 characters")
 	}
-
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
-
 	json.Unmarshal(data, quote)
-
 	return quote, nil
 }
 
@@ -57,8 +51,11 @@ func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*string,
 		return nil, err
 	}
 	var quote, _ = r.Query().QuoteByID(ctx, id)
+	if id == "" {
+		return nil, errors.New("error: id cannot be empty")
+	}
 	if quote == nil {
-		return nil, errors.New("error: ID not found")
+		return nil, errors.New("error: invalid id")
 	}
 	client := &http.Client{}
 	response, err := client.Do(request)
@@ -75,7 +72,6 @@ func (r *queryResolver) RandomQuote(ctx context.Context) (*model.Quote, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	client := &http.Client{}
 	response, _ := client.Do(request)
 	if response.Status == "401 Unauthorized" {
@@ -85,10 +81,8 @@ func (r *queryResolver) RandomQuote(ctx context.Context) (*model.Quote, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	var quote model.Quote
 	json.Unmarshal(data, &quote)
-
 	return &quote, nil
 }
 
@@ -97,16 +91,16 @@ func (r *queryResolver) QuoteByID(ctx context.Context, id string) (*model.Quote,
 	url := "http://34.160.33.1:80/quotes/" + id
 	request, err := http.NewRequest("GET", url, nil)
 	request.Header.Set("x-api-key", fmt.Sprint(ctx.Value("myKey")))
-	if err != nil {
-		return nil, err
+	if err != nil || id == "" {
+		return nil, errors.New("error: id cannot be empty")
 	}
 	client := &http.Client{}
 	response, _ := client.Do(request)
 	switch response.StatusCode {
 	case 401:
-		return nil, errors.New("Error: " + response.Status)
+		return nil, errors.New("error: " + response.Status)
 	case 404:
-		return nil, errors.New("Error: " + response.Status)
+		return nil, errors.New("error: " + response.Status)
 	}
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
