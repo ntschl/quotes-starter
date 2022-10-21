@@ -24,18 +24,14 @@ func main() {
 	}
 	router := chi.NewRouter()
 	router.Use(Middleware())
-
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
-
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", srv)
-
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	err := http.ListenAndServe(":"+port, router)
 	if err != nil {
 		panic(err)
 	}
-
 }
 
 func Middleware() func(http.Handler) http.Handler {
@@ -43,7 +39,6 @@ func Middleware() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// put it in context
 			ctx := context.WithValue(r.Context(), "myKey", r.Header.Get("x-api-key"))
-
 			// and call the next with our new context
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)

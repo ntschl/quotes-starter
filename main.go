@@ -49,14 +49,12 @@ func connectUnixSocket() error {
 		}
 		return v
 	}
-
 	var (
 		dbUser         = mustGetenv("DB_USER")              // e.g. 'my-db-user'
 		dbPwd          = mustGetenv("NATE_PASSWORD")        // e.g. 'my-db-password'
 		unixSocketPath = mustGetenv("INSTANCE_UNIX_SOCKET") // e.g. '/cloudsql/project:region:instance' AKA HOST NAME
 		dbName         = mustGetenv("DB_NAME")              // e.g. 'my-database'
 	)
-
 	dbURI := fmt.Sprintf("user=%s password=%s database=%s host=%s",
 		dbUser, dbPwd, dbName, unixSocketPath)
 
@@ -66,9 +64,6 @@ func connectUnixSocket() error {
 	if err != nil {
 		return fmt.Errorf("sql.Open: %v", err)
 	}
-
-	// ...
-
 	return err
 }
 
@@ -77,11 +72,9 @@ func postQuote(c *gin.Context) {
 	q := &quote{}
 	var newID id
 	newID.ID = uuid.New().String()
-
 	if err := c.BindJSON(&q); err != nil {
 		return
 	}
-
 	if validateQuote(*q) && authenticate(c) {
 		sqlString := "INSERT INTO quotes (id, quote, author) VALUES ($1, $2, $3)"
 		_, err := pool.Exec(sqlString, &newID.ID, &q.Quote, &q.Author)
