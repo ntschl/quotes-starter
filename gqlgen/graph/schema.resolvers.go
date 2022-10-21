@@ -30,9 +30,9 @@ func (r *mutationResolver) CreateQuote(ctx context.Context, input model.NewQuote
 	response, _ := client.Do(request)
 	switch response.StatusCode {
 	case 401:
-		return nil, errors.New("Error: " + response.Status)
+		return nil, errors.New("error: unauthorized")
 	case 400:
-		return nil, errors.New("Error: " + response.Status)
+		return nil, errors.New("error: quote and author must be at least 3 characters")
 	}
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -51,8 +51,11 @@ func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*string,
 		return nil, err
 	}
 	var quote, _ = r.Query().QuoteByID(ctx, id)
-	if quote == nil || id == "" {
-		return nil, errors.New("error: ID cannot be empty")
+	if id == "" {
+		return nil, errors.New("error: id cannot be empty")
+	}
+	if quote == nil {
+		return nil, errors.New("error: invalid id")
 	}
 	client := &http.Client{}
 	response, err := client.Do(request)
